@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Софтфон</title>
+<style>
+  :root { --bg:#f6f7f9; --card:#fff; --text:#1c2230; --muted:#6b7385; --line:#e3e6ec; --ok:#1f9d55; --bad:#d64545; --accent:#2f6fed; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14171d; --card:#1d222b; --text:#e8ebf1; --muted:#98a1b3; --line:#2b3240; }
+  }
+  * { box-sizing:border-box; }
+  body { margin:0; font:15px/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; background:var(--bg); color:var(--text); }
+  main { max-width:460px; margin:0 auto; padding:16px; display:grid; gap:12px; }
+  .card { background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px; }
+  .row { display:flex; gap:8px; align-items:center; }
+  .row > * { flex:1; }
+  h1 { font-size:16px; margin:0; flex:none; }
+  .status { flex:none; font-size:13px; padding:3px 10px; border-radius:999px; border:1px solid var(--line); color:var(--muted); }
+  .status.on { color:var(--ok); border-color:var(--ok); }
+  .status.off { color:var(--bad); border-color:var(--bad); }
+  input { width:100%; padding:11px 12px; font-size:17px; border:1px solid var(--line); border-radius:8px; background:transparent; color:var(--text); }
+  button { padding:11px 14px; font-size:15px; border:0; border-radius:8px; cursor:pointer; color:#fff; background:var(--accent); }
+  button.green { background:var(--ok); } button.red { background:var(--bad); } button.gray { background:var(--muted); }
+  button:disabled { opacity:.45; cursor:default; }
+  .incoming { border-color:var(--ok); }
+  .big { font-size:20px; font-weight:600; }
+  .muted { color:var(--muted); font-size:13px; }
+  a { color:var(--accent); }
+  table { width:100%; border-collapse:collapse; font-size:13px; }
+  td { padding:6px 4px; border-top:1px solid var(--line); }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<main>
+  <div class="card row">
+    <h1>Софтфон</h1>
+    <span id="status" class="status">нет связи</span>
+  </div>
+
+  <div id="incoming" class="card incoming hidden">
+    <div class="muted">Входящий звонок</div>
+    <div id="inNumber" class="big"></div>
+    <div id="inWho" class="muted">ищу в amoCRM…</div>
+    <div class="row" style="margin-top:10px">
+      <button id="answerBtn" class="green">Ответить</button>
+      <button id="declineBtn" class="red">Отклонить</button>
+    </div>
+  </div>
+
+  <div id="active" class="card hidden">
+    <div class="muted" id="activeLabel">Разговор</div>
+    <div id="activeNumber" class="big"></div>
+    <div id="activeWho" class="muted"></div>
+    <div id="timer" class="muted">00:00</div>
+    <button id="hangupBtn" class="red" style="margin-top:10px;width:100%">Завершить</button>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <input id="dial" type="tel" placeholder="Номер, например 8707…" autocomplete="off">
+      <button id="callBtn" class="green" style="flex:none" disabled>Позвонить</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row" style="margin-bottom:6px"><strong>Последние звонки</strong><button id="refreshBtn" class="gray" style="flex:none;padding:5px 10px;font-size:13px">обновить</button></div>
+    <table id="log"></table>
+  </div>
+
+  <audio id="remoteAudio" autoplay></audio>
+</main>
+
+<script src="https://cdn.jsdelivr.net/npm/jssip@3.10.1/dist/jssip.min.js"></script>
+<script>
+(function () {
+  const $ = (id) => document.getElementById(id);
+  const PC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+
+  let apiKey = localStorage.getItem('pbx_api_key') || '';
+  if (!apiKey) {
+    apiKey = (prompt('Ключ доступа (API_KEY)') || '').trim();
+    localStorage.setItem('pbx_api_key', apiKey);
+  }
+
+  let cfg = null, ua = null, current = null, timerId = null;
+
+  function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'x-api-key': apiKey, 'content-type': 'application/json' }, opts.headers || {});
+    return fetch(path, opts).then(function (r) {
+      if (r.status === 401) { localStorage.removeItem('pbx_api_key'); throw new Error('Неверный ключ — обновите страницу'); }
+      return r.json();
+    });
+  }
+
+  function setStatus(text, cls) {
+    const s = $('status'); s.textContent = text; s.className = 'status ' + (cls || '');
+  }
+
+  function sendEvent(c, state) {
+    api('/api/call-event', {
+      method: 'POST', keepalive: true,
+      body: JSON.stringify({ callUid: c.uid, direction: c.direction, phone: c.number, operator: cfg.user, state: state })
+    }).then(function () { if (state === 'ended') setTimeout(loadLog, 1500); }).catch(console.error);
+  }
+
+  function lookup(number, target) {
+    api('/api/lookup?phone=' + encodeURIComponent(number)).then(function (r) {
+      if (r.found) { target.innerHTML = ''; const a = document.createElement('a'); a.href = r.url; a.target = '_blank'; a.rel = 'noopener'; a.textContent = r.name + ' — открыть в amoCRM'; target.appendChild(a); }
+      else target.textContent = 'нет в amoCRM — попадёт в «Неразобранное»';
+    }).catch(function () { target.textContent = 'amoCRM недоступна'; });
+  }
+
+  function fmt(sec) { const m = Math.floor(sec / 60), s = sec % 60; return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+  function startTimer() { const t0 = Date.now(); clearInterval(timerId); timerId = setInterval(function () { $('timer').textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500); }
+
+  function finish(c) {
+    if (c.finished) return; c.finished = true;
+    clearInterval(timerId);
+    $('incoming').classList.add('hidden'); $('active').classList.add('hidden');
+    $('callBtn').disabled = !(ua && ua.isRegistered());
+    sendEvent(c, 'ended');
+    if (current === c) current = null;
+  }
+
+  function wire(c) {
+    const s = c.session;
+    s.on('peerconnection', function (e) {
+      e.peerconnection.ontrack = function (ev) { $('remoteAudio').srcObject = ev.streams[0]; $('remoteAudio').play().catch(function () {}); };
+    });
+    s.on('confirmed', function () {
+      sendEvent(c, 'answered');
+      $('incoming').classList.add('hidden');
+      $('active').classList.remove('hidden');
+      $('activeLabel').textContent = 'Разговор';
+      startTimer();
+    });
+    s.on('ended', function () { finish(c); });
+    s.on('failed', function () { finish(c); });
+  }
+
+  function start() {
+    api('/api/sip-config').then(function (c) {
+      cfg = c;
+      JsSIP.C.SESSION_EXPIRES = 0;
+      ua = new JsSIP.UA({
+        sockets: [new JsSIP.WebSocketInterface(cfg.wssUrl)],
+        uri: 'sip:' + cfg.user + '@' + cfg.domain,
+        password: cfg.password,
+        display_name: cfg.displayName,
+        register: true,
+        session_timers: false
+      });
+      ua.on('connected', function () { setStatus('соединение…', ''); });
+      ua.on('disconnected', function () { setStatus('нет связи', 'off'); $('callBtn').disabled = true; });
+      ua.on('registered', function () { setStatus('на линии: ' + cfg.user, 'on'); $('callBtn').disabled = !!current; });
+      ua.on('unregistered', function () { setStatus('не зарегистрирован', 'off'); $('callBtn').disabled = true; });
+      ua.on('registrationFailed', function (e) { setStatus('ошибка регистрации: ' + (e.cause || ''), 'off'); });
+      ua.on('newRTCSession', function (e) {
+        if (e.originator !== 'remote') return; // исходящие создаём сами
+        if (current) { e.session.terminate({ status_code: 486, reason_phrase: 'Busy Here' }); return; }
+        const number = e.session.remote_identity.uri.user;
+        current = { uid: crypto.randomUUID(), direction: 'inbound', number: number, session: e.session };
+        wire(current);
+        $('inNumber').textContent = number;
+        $('inWho').textContent = 'ищу в amoCRM…';
+        $('incoming').classList.remove('hidden');
+        $('activeNumber').textContent = number;
+        lookup(number, $('inWho'));
+        lookup(number, $('activeWho'));
+        sendEvent(current, 'ringing');
+        $('callBtn').disabled = true;
+      });
+      ua.start();
+    }).catch(function (e) { setStatus(e.message, 'off'); });
+  }
+
+  $('answerBtn').onclick = function () {
+    if (current) current.session.answer({ mediaConstraints: { audio: true, video: false }, pcConfig: PC_CONFIG });
+  };
+  $('declineBtn').onclick = function () { if (current) current.session.terminate({ status_code: 603, reason_phrase: 'Decline' }); };
+  $('hangupBtn').onclick = function () { if (current) current.session.terminate(); };
+
+  $('callBtn').onclick = function () {
+    const number = $('dial').value.replace(/[^\d+*#]/g, '');
+    if (!number || current || !ua) return;
+    current = { uid: crypto.randomUUID(), direction: 'outbound', number: number };
+    $('callBtn').disabled = true;
+    $('activeLabel').textContent = 'Вызов…';
+    $('activeNumber').textContent = number;
+    $('activeWho').textContent = '';
+    $('timer').textContent = '';
+    $('active').classList.remove('hidden');
+    lookup(number, $('activeWho'));
+    sendEvent(current, 'ringing');
+    current.session = ua.call('sip:' + number + '@' + cfg.domain, {
+      mediaConstraints: { audio: true, video: false },
+      rtcOfferConstraints: { offerToReceiveAudio: true },
+      pcConfig: PC_CONFIG
+    });
+    wire(current);
+  };
+  $('dial').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('callBtn').click(); });
+
+  function loadLog() {
+    api('/api/calls?limit=10').then(function (rows) {
+      const t = $('log'); t.innerHTML = '';
+      rows.forEach(function (r) {
+        const tr = document.createElement('tr');
+        const dir = r.direction === 'inbound' ? '↘' : '↗';
+        const st = r.status === 'missed' ? 'пропущен' : fmt(r.duration_sec);
+        const amoMark = r.amo_status === 'sent' ? '✓' : r.amo_status === 'error' ? '⚠' : '…';
+        const when = new Date(r.started_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        [dir + ' ' + r.phone, st, when, 'amo ' + amoMark].forEach(function (txt, i) {
+          const td = document.createElement('td'); td.textContent = txt;
+          if (i === 3 && r.amo_error) td.title = r.amo_error;
+          tr.appendChild(td);
+        });
+        t.appendChild(tr);
+      });
+    }).catch(console.error);
+  }
+  $('refreshBtn').onclick = loadLog;
+
+  start();
+  loadLog();
+})();
+</script>
+</body>
+</html>
