@@ -40,7 +40,8 @@ function buildCallBody(row) {
 }
 
 // POST /api/v4/leads/unsorted/sip — для неизвестного номера (создаёт заявку в «Неразобранном»)
-function buildUnsortedBody(row, pipelineId) {
+// link в metadata обязателен для amo: если записи разговора нет, подставляем запасную ссылку
+function buildUnsortedBody(row, pipelineId, fallbackLink) {
   const ts = unixTs(row.started_at);
   const metadata = {
     is_call_event_needed: true,
@@ -51,7 +52,7 @@ function buildUnsortedBody(row, pipelineId) {
     called_at: ts,
     from: SOURCE,
   };
-  if (row.recording_url) metadata.link = row.recording_url;
+  metadata.link = row.recording_url || fallbackLink || 'https://example.com/';
 
   const item = {
     request_id: row.call_uid,

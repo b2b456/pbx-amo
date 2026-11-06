@@ -100,7 +100,7 @@ async function pushToAmo(row) {
     if (contact) {
       await amo('POST', '/api/v4/calls', buildCallBody(row));
     } else {
-      await amo('POST', '/api/v4/leads/unsorted/sip', buildUnsortedBody(row, AMO_PIPELINE_ID));
+      await amo('POST', '/api/v4/leads/unsorted/sip', buildUnsortedBody(row, AMO_PIPELINE_ID, (process.env.RENDER_EXTERNAL_URL || process.env.PUBLIC_URL || 'https://' + AMO_DOMAIN) + '/phone.html'));
     }
     await pool.query(`update calls set amo_status='sent', amo_error=null where call_uid=$1`, [row.call_uid]);
   } catch (e) {
