@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Линия — софтфон</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Onest:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{--ink:#0B1B3A;--muted:#5B6B8C;--line:#E3EAF6;--tint:#F4F7FF;--tint2:#E8EFFF;--blue:#2563EB;--deep:#1D4ED8;--green:#15803D;--red:#DC2626;--page:#F6F8FD;--soft:#DCE8FF}
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--page);color:var(--ink);font:14px/1.45 Onest,system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;justify-content:center;padding:16px}
+  body.embed{padding:0;background:#fff;align-items:stretch}
+  button{font-family:inherit;cursor:pointer}
+  button:focus-visible,input:focus-visible,a:focus-visible{outline:3px solid var(--blue);outline-offset:2px}
+  .hidden{display:none!important}
+  .panel{position:relative;width:380px;max-width:100%;height:min(720px,calc(100dvh - 32px));background:#fff;border:1px solid var(--line);border-radius:28px;box-shadow:0 2px 4px rgba(11,27,58,.04),0 32px 64px -20px rgba(29,63,176,.30);overflow:hidden;display:flex;flex-direction:column}
+  body.embed .panel{width:100%;height:100%;border:0;border-radius:0;box-shadow:none}
+  .view{flex:1;display:flex;flex-direction:column;min-height:0}
+  .hero{background:linear-gradient(160deg,#2D6BEA 0%,#2358D6 50%,#1D3FB0 100%);color:#fff;border-radius:0 0 32px 32px;padding:16px 20px 26px}
+  .top{display:flex;align-items:center;gap:10px}
+  .logo{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.16);display:flex;align-items:center;justify-content:center;flex:none}
+  .logo.solid{background:var(--blue);color:#fff}
+  .who{flex:1;min-width:0}
+  .who b{display:block;font-size:13px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .who span{font-size:12px;color:var(--soft)}
+  .who.dark span{color:var(--muted)}
+  .glass{width:34px;height:34px;border-radius:50%;border:0;background:rgba(255,255,255,.16);color:#fff;display:flex;align-items:center;justify-content:center;padding:0;flex:none}
+  .glass:hover{background:rgba(255,255,255,.26)}
+  .pill{display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:600;border-radius:999px;padding:5px 12px;background:var(--tint);color:var(--muted);white-space:nowrap}
+  .pill i{width:7px;height:7px;border-radius:50%;background:#8A97B3}
+  .pill.on{background:#E7F6EC;color:var(--green)} .pill.on i{background:#16A34A}
+  .pill.off{background:#FDECEC;color:#B91C1C} .pill.off i{background:var(--red)}
+  .center{text-align:center}
+  .rings{position:relative;width:168px;height:168px;margin:14px auto 0;display:flex;align-items:center;justify-content:center}
+  .rings:before,.rings:after{content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
+  .rings:before{inset:0}.rings:after{inset:20px;background:rgba(255,255,255,.11)}
+  .av{position:relative;z-index:1;width:92px;height:92px;border-radius:50%;background:#fff;color:var(--deep);display:flex;align-items:center;justify-content:center;font-size:30px;font-weight:600}
+  .kicker{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:var(--soft)}
+  h2.name{margin:8px 0 0;font-size:26px;font-weight:600;letter-spacing:-.01em;line-height:1.15;overflow-wrap:anywhere}
+  .num{margin-top:6px;font-size:16px;color:var(--soft);font-variant-numeric:tabular-nums}
+  .chip{margin-top:14px;display:inline-flex;align-items:center;gap:6px;background:rgba(255,255,255,.16);border-radius:999px;padding:5px 14px;font-size:12px;font-weight:600;color:#fff;text-decoration:none}
+  .timer{margin-top:14px;font-size:68px;font-weight:300;letter-spacing:-.03em;line-height:1;font-variant-numeric:tabular-nums}
+  .wave{margin-top:16px;height:40px;display:flex;align-items:center;justify-content:center;gap:3px}
+  .wave span{width:3px;height:8px;border-radius:2px;background:#fff;opacity:.8;animation:wv 1.1s ease-in-out infinite}
+  @keyframes wv{0%,100%{height:8px}50%{height:34px}}
+  .wave.still span{animation:none;height:8px;opacity:.4}
+  @media (prefers-reduced-motion:reduce){.wave span{animation:none;height:18px}.pulse{animation:none!important}}
+  .actions{margin-top:auto;padding:0 24px 28px;display:flex;justify-content:center;gap:64px}
+  .rb{display:flex;flex-direction:column;align-items:center;gap:8px}
+  .rb span,.cl{font-size:12px;color:var(--muted);font-weight:500}
+  .round{width:72px;height:72px;border-radius:50%;border:0;color:#fff;display:flex;align-items:center;justify-content:center;padding:0}
+  .round.red{background:var(--red);box-shadow:0 12px 24px -8px rgba(220,38,38,.6)}
+  .round.green{background:var(--green);box-shadow:0 12px 24px -8px rgba(21,128,61,.6)}
+  .pulse{animation:pl 1.4s ease-out infinite}
+  @keyframes pl{0%{box-shadow:0 0 0 0 rgba(21,128,61,.5)}100%{box-shadow:0 0 0 22px rgba(21,128,61,0)}}
+  .card{margin:20px 20px 0;background:var(--tint);border-radius:20px;padding:14px 18px;font-size:13px;color:#2B3A5E}
+  .controls{margin-top:22px;padding:0 24px;display:flex;justify-content:space-between}
+  .cb{width:58px;height:58px;border-radius:50%;border:0;background:var(--tint);color:var(--deep);display:flex;align-items:center;justify-content:center;padding:0}
+  .cb:hover{background:var(--tint2)}
+  .cb[aria-pressed="true"]{background:var(--blue);color:#fff}
+  .endbtn{width:100%;height:56px;border:0;border-radius:999px;background:var(--red);color:#fff;font-size:16px;font-weight:600;display:flex;align-items:center;justify-content:center;gap:10px;box-shadow:0 12px 24px -10px rgba(220,38,38,.6)}
+  .tabs{margin:0 20px;background:var(--tint);border-radius:999px;padding:4px;display:flex}
+  .tabs button{flex:1;height:36px;border:0;border-radius:999px;background:transparent;color:var(--muted);font-size:13px;font-weight:500}
+  .tabs button[aria-selected="true"]{background:#fff;color:var(--ink);font-weight:600;box-shadow:0 1px 3px rgba(11,27,58,.14)}
+  .lab{display:block;font-size:12px;font-weight:600;color:var(--muted);letter-spacing:.06em;text-transform:uppercase}
+  .dialbox{padding:22px 24px 0;text-align:center}
+  #dial{margin-top:6px;width:100%;border:0;background:transparent;text-align:center;font:500 30px Onest,system-ui,sans-serif;letter-spacing:-.01em;color:var(--ink);font-variant-numeric:tabular-nums}
+  #dial:focus-visible{outline:0;border-radius:0;box-shadow:0 2px 0 var(--blue)}
+  #dial::placeholder{color:#B7C2DB}
+  .dwho{min-height:20px;margin-top:2px;font-size:13px;color:var(--deep);font-weight:600}
+  .pad{display:grid;grid-template-columns:repeat(3,68px);justify-content:center;gap:12px 22px}
+  .rk{width:68px;height:68px;border-radius:50%;border:0;background:var(--tint);color:var(--ink);font:500 26px Onest,system-ui,sans-serif;padding:0}
+  .rk:hover{background:var(--tint2)}
+  .dialfoot{margin-top:auto;padding:14px 24px 26px;display:grid;grid-template-columns:repeat(3,68px);justify-content:center;gap:0 22px;align-items:center}
+  .dialfoot .round{width:72px;height:72px;margin:-2px}
+  .dialfoot .round:disabled{background:#B7C2DB;box-shadow:none;cursor:default}
+  .back{width:68px;height:68px;border:0;background:transparent;color:var(--muted);display:flex;align-items:center;justify-content:center;padding:0}
+  .hist{flex:1;overflow:auto;padding:12px 12px 16px}
+  .hrow{width:100%;display:flex;align-items:center;gap:12px;border:0;background:transparent;padding:10px 10px;border-radius:16px;text-align:left;color:var(--ink)}
+  .hrow:hover{background:var(--tint)}
+  .hico{width:36px;height:36px;border-radius:50%;background:var(--tint2);color:var(--deep);display:flex;align-items:center;justify-content:center;flex:none}
+  .hico.miss{background:#FDECEC;color:var(--red)}
+  .hmain{flex:1;min-width:0}.hmain b{display:block;font-weight:600;font-variant-numeric:tabular-nums}.hmain span{font-size:12px;color:var(--muted)}
+  .hside{font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+  .hside em{display:block;font-style:normal;font-weight:600}
+  .ok{color:var(--green)}.bad{color:var(--red)}
+  .empty{padding:36px 20px;text-align:center;color:var(--muted)}
+  .sheet{position:absolute;left:0;right:0;bottom:0;background:#fff;border-radius:28px 28px 0 0;box-shadow:0 -20px 40px -20px rgba(11,27,58,.35);padding:18px 0 24px}
+  .sheet .rk{width:60px;height:60px;font-size:22px}
+  .sheet .pad{grid-template-columns:repeat(3,60px);gap:10px 22px}
+  .sheetbar{display:flex;align-items:center;justify-content:space-between;padding:0 24px 12px}
+  .sheetbar output{font:500 20px Onest,system-ui,sans-serif;font-variant-numeric:tabular-nums;color:var(--ink)}
+  .link{border:0;background:transparent;color:var(--deep);font-weight:600;font-size:13px;padding:6px}
+  .overlay{position:absolute;inset:0;background:#fff;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:32px;text-align:center}
+  .overlay p{margin:0;color:var(--muted)}
+  .primary{border:0;border-radius:999px;background:var(--blue);color:#fff;font-weight:600;font-size:15px;height:48px;padding:0 28px}
+  .keyin{width:100%;border:1px solid var(--line);border-radius:14px;background:var(--tint);padding:13px 14px;font:500 16px Onest,system-ui,sans-serif;color:var(--ink);text-align:center}
+  .err{color:var(--red);min-height:20px;font-size:13px}
+</style>
+</head>
+<body>
+<section class="panel" id="panel" aria-label="Софтфон">
+
+  <!-- НАБОР / ИСТОРИЯ -->
+  <div class="view" id="vDial">
+    <div class="top" style="padding:16px 20px">
+      <div class="logo solid"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+      <div class="who dark"><b id="opName">Линия</b><span id="opExt">&nbsp;</span></div>
+      <span class="pill" id="status"><i></i><span id="statusText">нет связи</span></span>
+      <button class="glass embed-only" id="popBtn" aria-label="Открыть в отдельном окне" style="background:var(--tint);color:var(--deep)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></button>
+      <button class="glass embed-only" id="minBtn1" aria-label="Свернуть" style="background:var(--tint);color:var(--deep)"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+    </div>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tabDial" aria-selected="true">Набор</button>
+      <button role="tab" id="tabHist" aria-selected="false">История</button>
+    </div>
+
+    <div id="paneDial" class="view">
+      <div class="dialbox">
+        <label class="lab" for="dial">Номер телефона</label>
+        <input id="dial" type="tel" inputmode="tel" placeholder="+7 ___ ___ __ __" autocomplete="off">
+        <div class="dwho" id="dialWho"></div>
+      </div>
+      <div class="pad" style="margin-top:14px" id="mainPad"></div>
+      <div class="dialfoot">
+        <span></span>
+        <button class="round green" id="callBtn" aria-label="Позвонить" disabled><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></button>
+        <button class="back" id="backBtn" aria-label="Стереть"><svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5h11a1 1 0 0 1 1 1v12a1 1 0 0 1-1 1H9l-6-7 6-7zM13 10l4 4M17 10l-4 4"/></svg></button>
+      </div>
+    </div>
+
+    <div id="paneHist" class="view hidden">
+      <div class="hist" id="log"></div>
+    </div>
+  </div>
+
+  <!-- ВХОДЯЩИЙ -->
+  <div class="view hidden" id="vIn">
+    <div class="hero">
+      <div class="top">
+        <div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+        <div class="who"><b class="opNameC">Линия</b><span class="opExtC">&nbsp;</span></div>
+        <button class="glass embed-only minBtn" aria-label="Свернуть"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+      </div>
+      <div class="center">
+        <div class="rings" aria-hidden="true"><div class="av" id="inAv">?</div></div>
+        <div class="kicker">Входящий звонок</div>
+        <h2 class="name" id="inName"></h2>
+        <div class="num" id="inNum"></div>
+        <a class="chip" id="inChip" target="_blank" rel="noopener">Ищу в amoCRM…</a>
+      </div>
+    </div>
+    <div class="card" id="inNote">Звонок будет записан в amoCRM автоматически.</div>
+    <div class="actions">
+      <div class="rb"><button class="round red" id="declineBtn" aria-label="Отклонить"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(135deg)"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></button><span>Отклонить</span></div>
+      <div class="rb"><button class="round green pulse" id="answerBtn" aria-label="Ответить"><svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></button><span>Ответить</span></div>
+    </div>
+  </div>
+
+  <!-- РАЗГОВОР -->
+  <div class="view hidden" id="vAct">
+    <div class="hero">
+      <div class="top">
+        <div class="logo"><svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+        <div class="who"><b class="opNameC">Линия</b><span class="opExtC">&nbsp;</span></div>
+        <span class="pill" style="background:rgba(255,255,255,.16);color:#fff"><i style="background:#FF8A8A"></i>Запись</span>
+        <button class="glass embed-only minBtn" aria-label="Свернуть"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14"/></svg></button>
+      </div>
+      <div class="center" style="margin-top:24px">
+        <div class="kicker" id="actLabel">Разговор</div>
+        <h2 class="name" id="actName" style="font-size:22px;margin-top:6px"></h2>
+        <div class="num" id="actNum" style="font-size:14px;margin-top:4px"></div>
+        <a class="chip" id="actChip" target="_blank" rel="noopener" style="margin-top:12px">Ищу в amoCRM…</a>
+        <div class="timer" id="timer" style="font-size:60px">00:00</div>
+        <div class="wave still" id="wave" aria-hidden="true"></div>
+      </div>
+    </div>
+    <div class="controls">
+      <div class="rb"><button class="cb" id="muteBtn" aria-pressed="false" aria-label="Без звука"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg></button><span class="cl">Без звука</span></div>
+      <div class="rb"><button class="cb" id="holdBtn" aria-pressed="false" aria-label="Удержать"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 5v14M15 5v14"/></svg></button><span class="cl">Удержать</span></div>
+      <div class="rb"><button class="cb" id="keysBtn" aria-label="Клавиши"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="6" cy="6" r="1"/><circle cx="12" cy="6" r="1"/><circle cx="18" cy="6" r="1"/><circle cx="6" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="18" cy="12" r="1"/><circle cx="6" cy="18" r="1"/><circle cx="12" cy="18" r="1"/><circle cx="18" cy="18" r="1"/></svg></button><span class="cl">Клавиши</span></div>
+      <div class="rb"><a class="cb" id="amoBtn" target="_blank" rel="noopener" aria-label="Открыть в amoCRM" style="text-decoration:none;opacity:.45;pointer-events:none"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v5a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V7a1 1 0 0 1 1-1h5"/></svg></a><span class="cl">В amoCRM</span></div>
+    </div>
+    <div class="actions" style="margin-top:auto;gap:0">
+      <button class="endbtn" id="hangupBtn"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true" style="transform:rotate(135deg)"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>Завершить</button>
+    </div>
+    <div class="sheet hidden" id="sheet" role="dialog" aria-label="Клавиатура">
+      <div class="sheetbar"><output id="sheetOut">&nbsp;</output><button class="link" id="sheetClose">Скрыть</button></div>
+      <div class="pad" id="sheetPad"></div>
+    </div>
+  </div>
+
+  <!-- ВХОД ПО КЛЮЧУ -->
+  <div class="overlay hidden" id="keyView">
+    <div class="logo solid" style="width:48px;height:48px"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg></div>
+    <h2 style="margin:0;font-size:22px">Вход в софтфон</h2>
+    <p>Введите ключ доступа (API_KEY)</p>
+    <input class="keyin" id="keyIn" type="password" autocomplete="off" aria-label="Ключ доступа">
+    <div class="err" id="keyErr" role="alert"></div>
+    <button class="primary" id="keyOk">Войти</button>
+  </div>
+
+  <!-- ОТКРЫТО В ОТДЕЛЬНОМ ОКНЕ -->
+  <div class="overlay hidden" id="poppedView">
+    <h2 style="margin:0;font-size:20px">Софтфон открыт в отдельном окне</h2>
+    <p>Здесь линия отключена, чтобы звонки не дублировались.</p>
+    <button class="primary" id="popBack">Вернуть сюда</button>
+  </div>
+
+  <audio id="remoteAudio" autoplay></audio>
+</section>
+
+<script src="/jssip.min.js"></script>
+<script>
+(function () {
+  var $ = function (id) { return document.getElementById(id); };
+  var PC_CONFIG = { iceServers: [{ urls: 'stun:stun.l.google.com:19302' }] };
+  var params = new URLSearchParams(location.search);
+  var EMBED = params.get('embed') === '1' || window.parent !== window;
+  if (EMBED) document.body.classList.add('embed'); else document.querySelectorAll('.embed-only').forEach(function (e) { e.classList.add('hidden'); });
+
+  // ключ можно передать как #k=... (не уходит на сервер)
+  var hm = /(?:^#|&)k=([^&]*)/.exec(location.hash || '');
+  if (hm) { try { localStorage.setItem('pbx_api_key', decodeURIComponent(hm[1])); } catch (e) {} history.replaceState(null, '', location.pathname + location.search); }
+  var apiKey = ''; try { apiKey = localStorage.getItem('pbx_api_key') || ''; } catch (e) {}
+
+  // родитель (amoCRM) — только доверенные домены
+  var parentOrigin = '';
+  if (EMBED) {
+    try { parentOrigin = (location.ancestorOrigins && location.ancestorOrigins[0]) || new URL(document.referrer).origin; } catch (e) {}
+  }
+  var parentOk = /^https:\/\/[a-z0-9-]+\.(amocrm\.(ru|com)|kommo\.com)$/.test(parentOrigin);
+  function toParent(msg) { if (EMBED && parentOk) { msg.source = 'pbx-softphone'; window.parent.postMessage(msg, parentOrigin); } }
+
+  var cfg = null, ua = null, current = null, timerId = null, ringId = null, actx = null, dialTimer = null;
+
+  function api(path, opts) {
+    opts = opts || {};
+    opts.headers = Object.assign({ 'x-api-key': apiKey, 'content-type': 'application/json' }, opts.headers || {});
+    return fetch(path, opts).then(function (r) {
+      if (r.status === 401) { var e = new Error('Неверный ключ'); e.auth = true; throw e; }
+      return r.json();
+    });
+  }
+
+  /* ---------- утилиты ---------- */
+  function fmtPhone(n) {
+    var d = String(n || '').replace(/\D/g, '');
+    if (d.length === 11 && (d[0] === '7' || d[0] === '8')) return '+7 ' + d.slice(1, 4) + ' ' + d.slice(4, 7) + ' ' + d.slice(7, 9) + ' ' + d.slice(9);
+    return n || '';
+  }
+  function uid() { return (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'c-' + Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+  function fmt(sec) { sec = sec || 0; var m = Math.floor(sec / 60), s = sec % 60; return String(m).padStart(2, '0') + ':' + String(s).padStart(2, '0'); }
+  function initials(name) { var p = String(name || '').trim().split(/\s+/).filter(Boolean); return p.length ? (p[0][0] + (p[1] ? p[1][0] : '')).toUpperCase() : '?'; }
+  function show(id) { ['vDial', 'vIn', 'vAct'].forEach(function (v) { $(v).classList.toggle('hidden', v !== id); }); }
+  function setStatus(text, cls) { $('statusText').textContent = text; $('status').className = 'pill ' + (cls || ''); }
+  function setChip(el, r) {
+    if (r === null) { el.textContent = 'Ищу в amoCRM…'; el.removeAttribute('href'); return; }
+    if (r && r.found) { el.textContent = '✓ ' + r.name + ' · открыть в amoCRM'; if (r.url) el.href = r.url; }
+    else if (r && r.error) { el.textContent = 'amoCRM недоступна'; el.removeAttribute('href'); }
+    else { el.textContent = 'Нет в amoCRM — уйдёт в «Неразобранное»'; el.removeAttribute('href'); }
+  }
+  function lookup(number) {
+    return api('/api/lookup?phone=' + encodeURIComponent(number)).catch(function () { return { error: true }; });
+  }
+
+  /* ---------- кнопки-клавиши ---------- */
+  function buildPad(host, onKey) {
+    '123456789*0#'.split('').forEach(function (k) {
+      var b = document.createElement('button'); b.className = 'rk'; b.type = 'button'; b.textContent = k;
+      b.addEventListener('click', function () { onKey(k); }); host.appendChild(b);
+    });
+  }
+  buildPad($('mainPad'), function (k) { var el = $('dial'); el.value += k; el.dispatchEvent(new Event('input')); el.focus(); });
+  buildPad($('sheetPad'), function (k) {
+    if (current && current.session) { try { current.session.sendDTMF(k); } catch (e) {} $('sheetOut').textContent = ($('sheetOut').textContent.trim() + k).slice(-14); }
+  });
+  (function () { var w = $('wave'); for (var i = 0; i < 21; i++) { var s = document.createElement('span'); s.style.animationDelay = (i * 0.07) + 's'; w.appendChild(s); } })();
+
+  /* ---------- рингтон ---------- */
+  function beep() {
+    try {
+      actx = actx || new (window.AudioContext || window.webkitAudioContext)();
+      var o = actx.createOscillator(), g = actx.createGain(), t = actx.currentTime;
+      o.frequency.value = 440; g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.12, t + 0.02); g.gain.setValueAtTime(0.12, t + 0.38); g.gain.linearRampToValueAtTime(0, t + 0.42);
+      o.connect(g); g.connect(actx.destination); o.start(t); o.stop(t + 0.45);
+    } catch (e) {}
+  }
+  function ring(on) {
+    clearInterval(ringId); ringId = null;
+    if (on) { beep(); ringId = setInterval(beep, 2200); }
+  }
+
+  /* ---------- события на сервер ---------- */
+  function sendEvent(c, state) {
+    api('/api/call-event', { method: 'POST', keepalive: true,
+      body: JSON.stringify({ callUid: c.uid, direction: c.direction, phone: c.number, operator: cfg.user, state: state })
+    }).then(function () { if (state === 'ended') setTimeout(loadLog, 1500); }).catch(console.error);
+  }
+
+  /* ---------- таймер ---------- */
+  function startTimer() {
+    var t0 = Date.now(); clearInterval(timerId);
+    $('timer').textContent = '00:00'; $('wave').classList.remove('still');
+    timerId = setInterval(function () { $('timer').textContent = fmt(Math.floor((Date.now() - t0) / 1000)); }, 500);
+  }
+
+  /* ---------- экраны звонка ---------- */
+  function fillAct(c) {
+    $('actName').textContent = c.who && c.who.found ? c.who.name : fmtPhone(c.number);
+    $('actNum').textContent = c.who && c.who.found ? fmtPhone(c.number) : '';
+    setChip($('actChip'), c.who === undefined ? null : c.who);
+    var a = $('amoBtn');
+    if (c.who && c.who.found && c.who.url) { a.href = c.who.url; a.style.opacity = 1; a.style.pointerEvents = 'auto'; }
+    else { a.removeAttribute('href'); a.style.opacity = .45; a.style.pointerEvents = 'none'; }
+  }
+  function fillIn(c) {
+    $('inName').textContent = c.who && c.who.found ? c.who.name : fmtPhone(c.number);
+    $('inNum').textContent = c.who && c.who.found ? fmtPhone(c.number) : '';
+    $('inAv').textContent = c.who && c.who.found ? initials(c.who.name) : '?';
+    setChip($('inChip'), c.who === undefined ? null : c.who);
+  }
+  function resolveWho(c) {
+    lookup(c.number).then(function (r) {
+      c.who = r;
+      if (current === c) { fillIn(c); fillAct(c); }
+    });
+  }
+
+  function resetControls() {
+    ['muteBtn', 'holdBtn'].forEach(function (id) { $(id).setAttribute('aria-pressed', 'false'); });
+    $('sheet').classList.add('hidden'); $('sheetOut').textContent = ' ';
+  }
+
+  function finish(c) {
+    if (c.finished) return; c.finished = true;
+    clearInterval(timerId); ring(false); resetControls();
+    $('wave').classList.add('still');
+    show('vDial'); $('callBtn').disabled = !(ua && ua.isRegistered());
+    sendEvent(c, 'ended');
+    toParent({ type: 'state', state: 'idle' });
+    if (current === c) current = null;
+  }
+
+  function wire(c) {
+    var s = c.session;
+    s.on('peerconnection', function (e) {
+      e.peerconnection.ontrack = function (ev) { $('remoteAudio').srcObject = ev.streams[0]; $('remoteAudio').play().catch(function () {}); };
+    });
+    s.on('progress', function () { if (c.direction === 'outbound') $('actLabel').textContent = 'Идёт вызов…'; });
+    s.on('confirmed', function () {
+      sendEvent(c, 'answered'); ring(false);
+      show('vAct'); $('actLabel').textContent = 'Разговор'; fillAct(c); startTimer();
+      toParent({ type: 'state', state: 'active' });
+    });
+    s.on('ended', function () { finish(c); });
+    s.on('failed', function () { finish(c); });
+  }
+
+  /* ---------- SIP ---------- */
+  function start() {
+    api('/api/sip-config').then(function (c) {
+      cfg = c;
+      $('opName').textContent = cfg.displayName || cfg.user; $('opExt').textContent = 'Внутр. ' + cfg.user;
+      document.querySelectorAll('.opNameC').forEach(function (e) { e.textContent = cfg.displayName || cfg.user; });
+      document.querySelectorAll('.opExtC').forEach(function (e) { e.textContent = 'Внутр. ' + cfg.user; });
+      JsSIP.C.SESSION_EXPIRES = 0;
+      ua = new JsSIP.UA({
+        sockets: [new JsSIP.WebSocketInterface(cfg.wssUrl)],
+        uri: 'sip:' + cfg.user + '@' + cfg.domain, password: cfg.password,
+        display_name: cfg.displayName, register: true, session_timers: false
+      });
+      ua.on('connected', function () { setStatus('соединение…', ''); });
+      ua.on('disconnected', function () { setStatus('нет связи', 'off'); $('callBtn').disabled = true; });
+      ua.on('registered', function () { setStatus('на линии', 'on'); $('callBtn').disabled = !!current || !$('dial').value; toParent({ type: 'ready' }); });
+      ua.on('unregistered', function () { setStatus('не зарегистрирован', 'off'); $('callBtn').disabled = true; });
+      ua.on('registrationFailed', function (e) { setStatus('ошибка: ' + (e.cause || 'регистрация'), 'off'); });
+      ua.on('newRTCSession', function (e) {
+        if (e.originator !== 'remote') return;
+        if (current) { e.session.terminate({ status_code: 486, reason_phrase: 'Busy Here' }); return; }
+        var number = e.session.remote_identity.uri.user;
+        current = { uid: uid(), direction: 'inbound', number: number, session: e.session };
+        wire(current); fillIn(current); fillAct(current); resetControls();
+        show('vIn'); ring(true);
+        toParent({ type: 'state', state: 'incoming', phone: number });
+        sendEvent(current, 'ringing'); resolveWho(current);
+        $('callBtn').disabled = true;
+      });
+      ua.start();
+    }).catch(function (e) {
+      if (e.auth) askKey(e.message); else setStatus(e.message || 'ошибка', 'off');
+    });
+  }
+
+  /* ---------- действия ---------- */
+  $('answerBtn').onclick = function () {
+    ring(false);
+    if (current) current.session.answer({ mediaConstraints: { audio: true, video: false }, pcConfig: PC_CONFIG });
+  };
+  $('declineBtn').onclick = function () { if (current) current.session.terminate({ status_code: 603, reason_phrase: 'Decline' }); };
+  $('hangupBtn').onclick = function () { if (current) current.session.terminate(); };
+
+  $('muteBtn').onclick = function () {
+    if (!current || !current.session) return; var s = current.session, m = s.isMuted().audio;
+    if (m) s.unmute({ audio: true }); else s.mute({ audio: true });
+    this.setAttribute('aria-pressed', String(!m));
+  };
+  $('holdBtn').onclick = function () {
+    if (!current || !current.session) return; var s = current.session, h = s.isOnHold().local;
+    if (h) s.unhold(); else s.hold();
+    this.setAttribute('aria-pressed', String(!h));
+    $('actLabel').textContent = h ? 'Разговор' : 'На удержании';
+  };
+  $('keysBtn').onclick = function () { $('sheet').classList.remove('hidden'); };
+  $('sheetClose').onclick = function () { $('sheet').classList.add('hidden'); };
+
+  function placeCall(raw) {
+    var number = String(raw || '').replace(/[^\d+*#]/g, '');
+    if (!number || current || !ua || !ua.isRegistered()) return;
+    current = { uid: uid(), direction: 'outbound', number: number };
+    $('callBtn').disabled = true; resetControls();
+    $('actLabel').textContent = 'Вызов…'; $('timer').textContent = '00:00';
+    fillAct(current); show('vAct');
+    toParent({ type: 'state', state: 'active', phone: number });
+    sendEvent(current, 'ringing'); resolveWho(current);
+    current.session = ua.call('sip:' + number + '@' + cfg.domain, {
+      mediaConstraints: { audio: true, video: false }, rtcOfferConstraints: { offerToReceiveAudio: true }, pcConfig: PC_CONFIG
+    });
+    wire(current);
+  }
+  $('callBtn').onclick = function () { placeCall($('dial').value); };
+  $('dial').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('callBtn').click(); });
+  $('dial').addEventListener('input', function () {
+    var v = $('dial').value, digits = v.replace(/\D/g, '');
+    $('callBtn').disabled = !v || !!current || !(ua && ua.isRegistered());
+    $('dialWho').textContent = '';
+    clearTimeout(dialTimer);
+    if (digits.length >= 10) dialTimer = setTimeout(function () {
+      lookup(v).then(function (r) { if ($('dial').value === v) $('dialWho').textContent = r && r.found ? r.name + ' · найдена в amoCRM' : ''; });
+    }, 500);
+  });
+  $('backBtn').onclick = function () { var el = $('dial'); el.value = el.value.slice(0, -1); el.dispatchEvent(new Event('input')); };
+
+  /* ---------- вкладки и история ---------- */
+  function tab(which) {
+    var hist = which === 'hist';
+    $('tabDial').setAttribute('aria-selected', String(!hist)); $('tabHist').setAttribute('aria-selected', String(hist));
+    $('paneDial').classList.toggle('hidden', hist); $('paneHist').classList.toggle('hidden', !hist);
+    if (hist) loadLog();
+  }
+  $('tabDial').onclick = function () { tab('dial'); };
+  $('tabHist').onclick = function () { tab('hist'); };
+
+  function svgPhone(rot) {
+    return '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"' + (rot ? ' style="transform:rotate(' + rot + 'deg)"' : '') + '><path d="M5 4h4l2 5-2.5 1.5a11 11 0 0 0 5 5L15 13l5 2v4a2 2 0 0 1-2 2A16 16 0 0 1 3 6a2 2 0 0 1 2-2z"/></svg>';
+  }
+  function loadLog() {
+    api('/api/calls?limit=30').then(function (rows) {
+      var host = $('log'); host.textContent = '';
+      if (!rows.length) { var e = document.createElement('div'); e.className = 'empty'; e.textContent = 'Звонков пока нет'; host.appendChild(e); return; }
+      rows.forEach(function (r) {
+        var b = document.createElement('button'); b.type = 'button'; b.className = 'hrow';
+        var missed = r.status === 'missed';
+        var ico = document.createElement('div'); ico.className = 'hico' + (missed ? ' miss' : ''); ico.innerHTML = svgPhone(r.direction === 'inbound' ? 0 : 0);
+        var main = document.createElement('div'); main.className = 'hmain';
+        var n = document.createElement('b'); n.textContent = fmtPhone(r.phone);
+        var d = document.createElement('span'); d.textContent = (r.direction === 'inbound' ? 'Входящий' : 'Исходящий') + (missed ? ' · пропущен' : '');
+        main.appendChild(n); main.appendChild(d);
+        var side = document.createElement('div'); side.className = 'hside';
+        var t = document.createElement('em'); t.textContent = missed ? '—' : fmt(r.duration_sec);
+        var w = document.createElement('span'); w.textContent = new Date(r.started_at).toLocaleString('ru-RU', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+        var a = document.createElement('div'); a.style.marginTop = '2px';
+        a.className = r.amo_status === 'sent' ? 'ok' : r.amo_status === 'error' ? 'bad' : '';
+        a.textContent = r.amo_status === 'sent' ? 'amo ✓' : r.amo_status === 'error' ? 'amo ⚠' : 'amo …';
+        if (r.amo_error) a.title = r.amo_error;
+        side.appendChild(t); side.appendChild(w); side.appendChild(a);
+        b.appendChild(ico); b.appendChild(main); b.appendChild(side);
+        b.onclick = function () { $('dial').value = r.phone; $('dial').dispatchEvent(new Event('input')); tab('dial'); };
+        host.appendChild(b);
+      });
+    }).catch(function (e) { if (e.auth) askKey(e.message); else console.error(e); });
+  }
+
+  /* ---------- ключ доступа ---------- */
+  function askKey(msg) {
+    try { localStorage.removeItem('pbx_api_key'); } catch (e) {}
+    $('keyErr').textContent = msg || ''; $('keyView').classList.remove('hidden'); $('keyIn').focus();
+  }
+  function submitKey() {
+    var v = $('keyIn').value.trim(); if (!v) return;
+    try { localStorage.setItem('pbx_api_key', v); } catch (e) {}
+    location.reload();
+  }
+  $('keyOk').onclick = submitKey;
+  $('keyIn').addEventListener('keydown', function (e) { if (e.key === 'Enter') submitKey(); });
+
+  /* ---------- встраивание в amoCRM ---------- */
+  document.querySelectorAll('.minBtn').forEach(function (b) { b.onclick = function () { toParent({ type: 'minimize' }); }; });
+  $('minBtn1').onclick = function () { toParent({ type: 'minimize' }); };
+  $('popBtn').onclick = function () {
+    window.open(location.origin + '/phone.html#k=' + encodeURIComponent(apiKey), 'pbx_softphone', 'width=420,height=780');
+    if (ua) ua.stop(); $('poppedView').classList.remove('hidden');
+  };
+  $('popBack').onclick = function () { location.reload(); };
+  window.addEventListener('message', function (e) {
+    if (!parentOk || e.origin !== parentOrigin || !e.data || e.data.target !== 'pbx-softphone') return;
+    if (e.data.type === 'dial' && typeof e.data.phone === 'string') {
+      tab('dial'); $('dial').value = e.data.phone; $('dial').dispatchEvent(new Event('input'));
+      if (e.data.autocall) placeCall(e.data.phone);
+    }
+  });
+
+  if (!apiKey) askKey(''); else { start(); }
+})();
+</script>
+</body>
+</html>
