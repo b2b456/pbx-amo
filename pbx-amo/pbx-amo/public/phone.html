@@ -363,6 +363,10 @@
   function start() {
     api('/api/sip-config').then(function (c) {
       cfg = c;
+      if (!cfg.wssUrl || !cfg.user || !cfg.domain || !cfg.password) {
+        $('opName').textContent = 'Линия'; $('opExt').textContent = 'SIP не настроен';
+        setStatus('нет SIP-данных', 'off'); return;
+      }
       $('opName').textContent = cfg.displayName || cfg.user; $('opExt').textContent = 'Внутр. ' + cfg.user;
       document.querySelectorAll('.opNameC').forEach(function (e) { e.textContent = cfg.displayName || cfg.user; });
       document.querySelectorAll('.opExtC').forEach(function (e) { e.textContent = 'Внутр. ' + cfg.user; });
