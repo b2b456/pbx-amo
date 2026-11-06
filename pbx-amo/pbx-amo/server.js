@@ -30,6 +30,12 @@ for (const [k, v] of Object.entries({ DATABASE_URL, API_KEY, AMO_DOMAIN, AMO_TOK
 const pool = new Pool({ connectionString: DATABASE_URL, max: 5 });
 const app = express();
 app.use(express.json({ limit: '50kb' }));
+// Софтфон можно встраивать только в свой домен и в amoCRM/Kommo
+app.use((req, res, next) => {
+  res.setHeader('Content-Security-Policy', "frame-ancestors 'self' https://*.amocrm.ru https://*.amocrm.com https://*.kommo.com");
+  res.setHeader('Permissions-Policy', 'microphone=(self)');
+  next();
+});
 
 // ---------- авторизация по общему ключу ----------
 function safeEqual(a, b) {

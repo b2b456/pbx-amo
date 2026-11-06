@@ -1,9 +1,12 @@
 {
   "name": "pbx-amo",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "description": "Браузерный софтфон + интеграция звонков с amoCRM (Render + Neon)",
   "main": "server.js",
+  "license": "UNLICENSED",
+  "private": true,
   "scripts": {
+    "postinstall": "node scripts/build-client.js",
     "start": "node server.js",
     "test": "node --test"
   },
@@ -11,7 +14,9 @@
     "node": ">=20"
   },
   "dependencies": {
+    "esbuild": "^0.24.0",
     "express": "^4.21.0",
+    "jssip": "3.10.1",
     "pg": "^8.13.0"
   }
 }
